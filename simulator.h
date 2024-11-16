@@ -69,20 +69,20 @@ int regs[32] = { 0 }; // 32 regs
 
 class simulator {
 public:
-    int FindString(const string& key, int total); // Searches for the given string `key` in an array of instructions.
-    int RegisterIndex(const string& regName); // Maps a register name(e.g., "x0", "a1", "sp") to its numeric index.
+    int FindString(string key, int total); // Searches for the given string `key` in an array of instructions.
+    int RegisterIndex(string regName); // Maps a register name(e.g., "x0", "a1", "sp") to its numeric index.
     
-    string stripCharacter(string& token, char ch);  // Removes all occurrences of a specific character `ch` from the given string `token`.
+    string stripCharacter(string token, char ch);  // Removes all occurrences of a specific character `ch` from the given string `token`.
     int Run(int instruction, string line); // Decodes and executes a single assembly instruction represented by `line`
-    void loadProgram(const string& filePath); // Reads a program file specified by `filePath` and loads its instructions into memory.
-    string stripComma(string& token);  // Removes commas from the given string `token`.
-    void stripColon(string& token); // Removes colons from the given string `token`.
+    void loadProgram(string filePath); // Reads a program file specified by `filePath` and loads its instructions into memory.
+    string stripComma(string token);  // Removes commas from the given string `token`.
+    void stripColon(string token); // Removes colons from the given string `token`.
   
     void PrintReg(); // Prints the current state of the simulator
 };
 
-
-int simulator::FindString(const string& key, int total)
+// Searches for the given string `key` in an array of instructions.
+int simulator::FindString(string key, int total)
 {
     int start = 0, end = total - 1;
     while (start <= end)
@@ -103,7 +103,9 @@ int simulator::FindString(const string& key, int total)
     }
     return -1;
 }
-void simulator::loadProgram(const string& filename)
+
+// Reads a program file specified by `filePath` and loads its instructions into memory.
+void simulator::loadProgram( string filename)
 {
     Radix convert;
     fill(regs, regs + 32, 0);
@@ -215,7 +217,8 @@ void simulator::loadProgram(const string& filename)
     }
 }
 
-int simulator::RegisterIndex(const string& regName)
+// Maps a register name(e.g., "x0", "a1", "sp") to its numeric index.
+int simulator::RegisterIndex( string regName)
 {
     static map<string, int> registerMap = {
         {"zero", 0}, {"x0", 0}, {"ra", 1}, {"x1", 1}, {"sp", 2}, {"x2", 2},
@@ -235,19 +238,20 @@ int simulator::RegisterIndex(const string& regName)
     return (it != registerMap.end()) ? it->second : -1;
 }
 
-
-string simulator::stripComma(string& word)
+// Removes commas from the given string `token`.
+string simulator::stripComma(string word)
 {
     word.erase(remove(word.begin(), word.end(), ','), word.end());
     return word;
 }
 
-
-void simulator::stripColon(string& word)
+// Removes colons from the given string `token`.
+void simulator::stripColon(string word)
 {
     word.erase(remove(word.begin(), word.end(), ':'), word.end());
 }
 
+// Prints the current state of the simulator
 void simulator::PrintReg()
 {
     Radix converter;
@@ -256,35 +260,20 @@ void simulator::PrintReg()
     {    
         if (regs[i] != 0) {
             cout << "x" << i << " = " << regs[i]
-                << ", Binary: " << converter.decimalToBinary(regs[i], 32)
-                << ", Hex: " << converter.decimalTohexa(regs[i]) << "\n";
+                << " |  Binary: " << converter.decimalToBinary(regs[i], 32)
+                << " |  Hex: " << converter.decimalTohexa(regs[i]) << "\n";
         }
       
     }
 
-    cout << "\nData Contents:\n";
-    for (const auto& data : memoryContents)
-    {
-        cout << data[0] << " = " << data[1];
-        if (data.size() == 3)
-        {
-            cout << " = " << data[2];
-        }
-        //cout << "\n";
-    }
-
-    cout << "\nstackFrames Contents:\n";
-    for (const auto& frame : stackFrames)
-    {
-        cout << frame[0] << " = " << frame[1] << "\n";
-    }
 
     cout << "\nProgram Counter = " << programCounter
         << ", Binary: " << converter.decimalToBinary(programCounter, 32)
         << ", Hex: " << converter.decimalTohexa(programCounter) << "\n";
 }
 
-string simulator::stripCharacter(string& word, char character)
+// Removes all occurrences of a specific character `ch` from the given string `token`.
+string simulator::stripCharacter(string word, char character)
 {
     for (size_t i = 0; i < word.size(); /* no increment here */)
     {
@@ -298,8 +287,9 @@ string simulator::stripCharacter(string& word, char character)
         }
     }
     return word;
-}
+} 
 
+// Decodes and executes a single assembly instruction represented by `line`
 int simulator::Run(int instruction, string line)
 {
     Radix convert;
