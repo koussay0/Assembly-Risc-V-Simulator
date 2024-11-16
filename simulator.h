@@ -1,5 +1,6 @@
 #pragma once
 #include "Radix.h"
+#include <iostream>
 #include <fstream>
 #include <string>
 #include<sstream>
@@ -77,7 +78,7 @@ public:
     string stripComma(string& token);  // Removes commas from the given string `token`.
     void stripColon(string& token); // Removes colons from the given string `token`.
   
-    void print(); // Prints the current state of the simulator
+    void PrintReg(); // Prints the current state of the simulator
 };
 
 
@@ -102,7 +103,117 @@ int simulator::FindString(const string& key, int total)
     }
     return -1;
 }
+void simulator::loadProgram(const string& filename)
+{
+    Radix convert;
+    fill(regs, regs + 32, 0);
+    memoryContents.clear();
+    stackFrames.clear();
+    memoryStore.clear();
+    regs[2] = INT_MAX;
+    string read;
+    ifstream my_file(filename);
+    int x, i = 0;
+    while (getline(my_file, read))
+    {
+        memoryStore.push_back(read);
+        istringstream iss(read);
+        string word;
+        iss >> word;
+        if (read.empty())
+        {
+            i++;
+            continue;
+        }
+        else if (word[0] == '#')
+        {
+            i++;
+            continue;
+        }
+        else if (!word.empty() && word.back() == ':') {
+            stripColon(word);
+            memoryContents.push_back({ convert.decimalTohexa(i * 4), word });
+            i++;
+            continue;
+        }
+        else if (word == ".data")
+        {
+            while (word != ".text")
+            {
+                getline(my_file, read);
+                memoryStore.push_back(read);
+                istringstream iss(read);
+                string word;
+                iss >> word;
+                stripColon(word);
+                string name, type;
+                name = word;
+                iss >> type;
+                if (type == ".string")
+                {
+                    string message = "";
+                    while (iss >> word)
+                    {
+                        message += word;
+                    }
+                    stripCharacter(message, '"');
+                    memoryContents.push_back({ convert.decimalTohexa(i * 4),name, message });
+                }
+                else
+                {
+                    cout << "format not supported\n";
+                }
+                i++;
 
+                break;
+            }
+        }
+        i++;
+    }
+    my_file.close();
+    for (programCounter; programCounter < memoryStore.size(); programCounter++)
+    {
+        istringstream iss(memoryStore[programCounter]);
+        string word;
+        iss >> word;
+        if (memoryStore[programCounter].empty())
+        {
+            continue;
+        }
+        if (word[0] == '#')
+        {
+            continue;
+        }
+        else if (!word.empty() && word.back() == ':') {
+            continue;
+        }
+        else if (word == ".data")
+        {
+            while (memoryStore[programCounter] != ".text")
+            {
+                programCounter++;
+            }
+            continue;
+        }
+        int z = FindString(word, 45);
+        if (z == -1)
+        {
+            cout << "ERROR! Invalid instruction, program terminated.\n";
+            break;
+        }
+        x = Run(z, memoryStore[programCounter]);
+        PrintReg();
+        if (x == -1)
+        {
+            cout << "ERROR! Invalid instruction, program terminated.\n";
+            break;
+        }
+        if (x == -2)
+        {
+            break;
+        }
+    }
+}
 
 int simulator::RegisterIndex(const string& regName)
 {
@@ -125,41 +236,6 @@ int simulator::RegisterIndex(const string& regName)
 }
 
 
-void simulator::print()
-{
-    Radix converter;
-    cout << "Register Contents:\n";
-    for (int i = 0; i < 32; ++i)
-    {
-        cout << "x" << i << " = " << regs[i]
-            << ", Binary: " << converter.decimalToBinary(regs[i], 32)
-            << ", Hex: " << converter.decimalTohexa(regs[i]) << "\n";
-    }
-
-    cout << "\nData Contents:\n";
-    for (const auto& data : memoryContents)
-    {
-        cout << data[0] << " = " << data[1];
-        if (data.size() == 3)
-        {
-            cout << " = " << data[2];
-        }
-        cout << "\n";
-    }
-
-    cout << "\nstackFrames Contents:\n";
-    for (const auto& frame : stackFrames )
-    {
-        cout << frame[0] << " = " << frame[1] << "\n";
-    }
-
-    cout << "\nProgram Counter = " << programCounter
-        << ", Binary: " << converter.decimalToBinary(programCounter, 32)
-        << ", Hex: " << converter.decimalTohexa(programCounter) << "\n";
-}
-
-
-
 string simulator::stripComma(string& word)
 {
     word.erase(remove(word.begin(), word.end(), ','), word.end());
@@ -172,6 +248,41 @@ void simulator::stripColon(string& word)
     word.erase(remove(word.begin(), word.end(), ':'), word.end());
 }
 
+void simulator::PrintReg()
+{
+    Radix converter;
+    cout<< "Register Contents (Only Registers that has a non-Zero content to ensure readability ) :\n\n";
+    for (int i = 0; i < 32; ++i)
+    {    
+        if (regs[i] != 0) {
+            cout << "x" << i << " = " << regs[i]
+                << ", Binary: " << converter.decimalToBinary(regs[i], 32)
+                << ", Hex: " << converter.decimalTohexa(regs[i]) << "\n";
+        }
+      
+    }
+
+    cout << "\nData Contents:\n";
+    for (const auto& data : memoryContents)
+    {
+        cout << data[0] << " = " << data[1];
+        if (data.size() == 3)
+        {
+            cout << " = " << data[2];
+        }
+        //cout << "\n";
+    }
+
+    cout << "\nstackFrames Contents:\n";
+    for (const auto& frame : stackFrames)
+    {
+        cout << frame[0] << " = " << frame[1] << "\n";
+    }
+
+    cout << "\nProgram Counter = " << programCounter
+        << ", Binary: " << converter.decimalToBinary(programCounter, 32)
+        << ", Hex: " << converter.decimalTohexa(programCounter) << "\n";
+}
 
 string simulator::stripCharacter(string& word, char character)
 {
@@ -2223,114 +2334,3 @@ int simulator::Run(int instruction, string line)
     return 0;
 }
 
-void simulator::loadProgram(const string& filename)
-{
-    Radix convert;
-    fill(regs, regs + 32, 0);
-    memoryContents.clear();
-    stackFrames.clear();
-    memoryStore.clear();
-    regs[2] = INT_MAX;
-    string read;
-    ifstream my_file(filename);
-    int x, i = 0;
-    while (getline(my_file, read))
-    {
-        memoryStore.push_back(read);
-        istringstream iss(read);
-        string word;
-        iss >> word;
-        if (read.empty())
-        {
-            i++;
-            continue;
-        }
-        else if (word[0] == '#')
-        {
-            i++;
-            continue;
-        }
-        else if (!word.empty() && word.back() == ':') {
-            stripColon(word);
-            memoryContents.push_back({ convert.decimalTohexa(i * 4), word });
-            i++;
-            continue;
-        }
-        else if (word == ".data")
-        {
-            while (word != ".text")
-            {
-                getline(my_file, read);
-                memoryStore.push_back(read);
-                istringstream iss(read);
-                string word;
-                iss >> word;
-                stripColon(word);
-                string name, type;
-                name = word;
-                iss >> type;
-                if (type == ".string")
-                {
-                    string message = "";
-                    while (iss >> word)
-                    {
-                        message += word;
-                    }
-                    stripCharacter(message, '"');
-                    memoryContents.push_back({ convert.decimalTohexa(i * 4),name, message });
-                }
-                else
-                {
-                    cout << "format not supported\n";
-                }
-                i++;
-
-                break;
-            }
-        }
-        i++;
-    }
-    my_file.close();
-    for (programCounter; programCounter < memoryStore.size(); programCounter++)
-    {
-        istringstream iss(memoryStore[programCounter]);
-        string word;
-        iss >> word;
-        if (memoryStore[programCounter].empty())
-        {
-            continue;
-        }
-        if (word[0] == '#')
-        {
-            continue;
-        }
-        else if (!word.empty() && word.back() == ':') {
-            continue;
-        }
-        else if (word == ".data")
-        {
-            while (memoryStore[programCounter] != ".text")
-            {
-                programCounter++;
-            }
-            continue;
-        }
-        int z = FindString(word, 45);
-        if (z == -1)
-        {
-            cout << "ERROR! Invalid instruction, program terminated.\n";
-            break;
-        }
-        x = Run(z, memoryStore[programCounter]);
-        print();
-        if (x == -1)
-        {
-            cout << "ERROR! Invalid instruction, program terminated.\n";
-            break;
-        }
-        if (x == -2)
-        {
-            break;
-        }
-    }
-}

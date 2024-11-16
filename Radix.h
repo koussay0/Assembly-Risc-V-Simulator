@@ -15,169 +15,122 @@ private:
 
 };
 
-
-int Radix::binaryToDecimal(string n) // converts binary to decimal
+int Radix::binaryToDecimal(string bin) // converts binary to decimal
 {
-    string num = n;
-    int dec_value = 0;
-
-    // Initializing base value to 1, i.e 2^0
+    int dec = 0;
     int base = 1;
 
-    int len = num.length();
-    for (int i = len - 1; i >= 0; i--)
-    {
-        if (num[i] == '1')
-            dec_value += base;
-        base = base * 2;
+    for (int i = bin.length() - 1; i >= 0; i--) {
+        if (bin[i] == '1')
+            dec += base;
+        base *= 2;
     }
 
-    return dec_value;
+    return dec;
 }
 
-string Radix::twosComplement(string binary) {
-    // Determine the number of bits in the binary representation
-    int numBits = binary.length();
+string Radix::twosComplement(string bin) {
+    int len = bin.length();
+    bool pos = true;
 
-    // Find the position of the most significant bit set to 1
-    bool  flag = true;
-    if (binary[numBits - 1] == '1')
-    {
-        flag = false;
+    if (bin[len - 1] == '1') {
+        pos = false;
     }
 
-
-    // If there are no bits set to 1, the twos complement is just the original number
-    if (flag) {
-        return binary;
+    if (pos) {
+        return bin;
     }
 
-    // Create a string to store the ones complement
-    string onesComplement = binary;
+    string ones = bin;
 
-    // Flip all bits in the ones complement
-    for (int i = 0; i < numBits; i++) {
-        if (onesComplement[i] == '0') {
-            onesComplement[i] = '1';
+    for (int i = 0; i < len; i++) {
+        ones[i] = (ones[i] == '0') ? '1' : '0';
+    }
+
+    string twos = ones;
+
+    for (int i = len - 1; i >= 0; i--) {
+        if (twos[i] == '0') {
+            twos[i] = '1';
+            break;
         }
         else {
-            onesComplement[i] = '0';
+            twos[i] = '0';
         }
     }
 
-    // Create a string to store the twos complement
-    string twosComplement = onesComplement;
-
-    // Add one to the twos complement
-    for (int i = numBits - 1; i >= 0; i--) {
-        if (twosComplement[i] == '0') {
-            twosComplement[i] = '1';
-        }
-        else {
-            twosComplement[i] = '0';
-        }
-    }
-
-    return twosComplement;
+    return twos;
 }
 
-string Radix::decimalToBinary(int decimal, int digits) // ddecimal to binary
+string Radix::decimalToBinary(int dec, int bits) // decimal to binary
 {
-    bool flag = false;
-    if (decimal < 0)
-    {
-        flag = true;
-        decimal *= -1;
+    bool neg = false;
+    if (dec < 0) {
+        neg = true;
+        dec = -dec;
     }
-    // array to store binary number
-    int binaryNum[32] = { 0 };
-    string bin = "";
-    // counter for binary array
+
+    int bin[32] = { 0 };
+    string result = "";
+
     int i = 0;
-
-
-    while (decimal > 0) {
-
-        // storing remainder in binary array
-        binaryNum[i] = decimal % 2;
-        decimal = decimal / 2;
-        i++;
+    while (dec > 0) {
+        bin[i++] = dec % 2;
+        dec /= 2;
     }
 
-    // printing binary array in reverse order
-    for (int j = digits - 1; j >= 0; j--)
-        bin += to_string(binaryNum[j]);
+    for (int j = bits - 1; j >= 0; j--)
+        result += to_string(bin[j]);
 
-    if (flag)
-    {
-        bin = twosComplement(bin);
+    if (neg) {
+        result = twosComplement(result);
     }
-    return bin;
+
+    return result;
 }
 
-string Radix::decimalTohexa(int decimal) // decimal to hex
+string Radix::decimalTohexa(int dec) // decimal to hex
 {
-    bool flag = false;
-    if (decimal < 0)
-    {
-        flag = true;
-        decimal *= -1;
+    bool neg = false;
+    if (dec < 0) {
+        neg = true;
+        dec = -dec;
     }
-    // array to store binary number
-    string hexNum[8] = { "0","0","0","0","0","0","0","0" };
-    string hex = "0x";
-    if (flag)
-    {
-        hex = "-0x";
-    }
+
+    string hex[8] = { "0","0","0","0","0","0","0","0" };
+    string result = neg ? "-0x" : "0x";
 
     int i = 0;
-    while (decimal != 0)
-    {
-        // remainder variable to store remainder
-        int rem = 0;
-
-        // ch variable to store each character
-        char ch;
-        // storing remainder in rem variable.
-        rem = decimal % 16;
-
-        // check if temp < 10
-        if (rem < 10) {
-            ch = rem + 48;
-        }
-        else
-        {
-            ch = rem + 55;
-        }
-        hexNum[i] = ch;
-        decimal = decimal / 16;
-        i++;
+    while (dec != 0) {
+        int rem = dec % 16;
+        char ch = (rem < 10) ? (rem + '0') : (rem + 'A' - 10);
+        hex[i++] = ch;
+        dec /= 16;
     }
-    // printing binary array in reverse order
+
     for (int j = 7; j >= 0; j--)
-        hex += hexNum[j];
-    return hex;
+        result += hex[j];
+
+    return result;
 }
 
-int Radix::hexaToDecimal(string hex) // hex
+int Radix::hexaToDecimal(string hex) // hex to decimal
 {
-    int r, len = 8, sum = 0;
-    for (int i = 2; i < 10; i++)
-    {
-        r = -1;
+    int dec = 0, len = 8;
+    for (int i = 2; i < 10; i++) {
+        int r = -1;
         len--;
         if (hex[i] >= '0' && hex[i] <= '9')
-            r = hex[i] - 48;
+            r = hex[i] - '0';
         else if (hex[i] >= 'a' && hex[i] <= 'f')
-            r = hex[i] - 87;
+            r = hex[i] - 'a' + 10;
         else if (hex[i] >= 'A' && hex[i] <= 'F')
-            r = hex[i] - 55;
-        if (r == -1)
-        {
+            r = hex[i] - 'A' + 10;
+
+        if (r == -1) {
             return -1;
         }
-        sum += r * pow(16, len);
+        dec += r * pow(16, len);
     }
-    return sum;
+    return dec;
 }
