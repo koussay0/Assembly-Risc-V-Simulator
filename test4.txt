@@ -1,0 +1,14 @@
+addi x1, x0, 5     # x1 = 5 (Binary: 101)
+addi x2, x0, 3     # x2 = 3 (Binary: 011)
+and x3, x1, x2     # x3 = x1 & x2 (Binary: 001)
+or x4, x1, x2      # x4 = x1 | x2 (Binary: 111)
+xor x5, x1, x2     # x5 = x1 ^ x2 (Binary: 110)
+
+
+
+# x1 = 5
+# x2 = 3
+# x3 = 1
+# x4 = 7
+# x5 = 6
+# Program Counter = 5

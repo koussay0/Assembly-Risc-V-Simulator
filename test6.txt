@@ -1,0 +1,13 @@
+addi x1, x0, 1    # x1 = 1
+addi x2, x0, 2    # x2 = 2
+beq x1, x2, label # Branch if x1 == x2 (does not branch)
+addi x3, x0, 3    # x3 = 3 (executed)
+label:
+addi x4, x0, 4    # x4 = 4
+
+
+# x1 = 1
+# x2 = 2
+# x3 = 3
+# x4 = 4
+# Program Counter = 5

@@ -1,0 +1,17 @@
+# Recursive factorial calculation of 5
+addi x1, x0, 5      # x1 = 5 (n)
+addi x2, x0, 1      # x2 = 1 (result)
+
+factorial:
+    beq x1, x0, done # If n == 0, end recursion
+    mul x2, x2, x1   # x2 = x2 * n
+    addi x1, x1, -1  # n = n - 1
+    jal x0, factorial # Recurse
+
+done:
+    addi x3, x2, 0   # x3 = factorial(5)
+
+
+
+# x3 = 120 (5!)
+# Program Counter = 7
